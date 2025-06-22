@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../Boxes.dart';
+import '../models/local_cities.dart';
+import 'favorite_cities.dart';
+
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
 
@@ -121,6 +125,36 @@ class _WeatherPageState extends State<WeatherPage> {
                     },
                   ),
                   SizedBox(height: 400,),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final box = Boxes.getHiveLocalCityBox();
+                      // Evita duplicados
+                      if (!box.values.any((c) => c.name.toLowerCase() == ciudad.toLowerCase())) {
+                        await box.add(LocalCity(name: ciudad));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('$ciudad añadida a favoritos')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.favorite),
+                    label: const Text("Agregar a favoritos"),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const FavoriteCitiesPage()),
+                      );
+                    },
+                    icon: const Icon(Icons.list),
+                    label: const Text('Ciudades favoritas'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+
+
                 ],
               ),
             ),
