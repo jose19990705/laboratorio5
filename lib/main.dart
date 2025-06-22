@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:laboratorio5/pages/splash_page.dart';
 
-void main() {
+import 'models/local_cities.dart';
+
+void main() async{
+  await Hive.initFlutter();
+  Hive.registerAdapter(LocalCityAdapter());
+  await Hive.openBox<LocalCity>('localCityBox');
+
   runApp(const MyApp());
 }
 

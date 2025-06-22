@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../Boxes.dart';
+import '../models/local_cities.dart';
+import 'favorite_cities.dart';
+
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
 
@@ -13,6 +17,7 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage> {
   String Fondo = 'assets/images/FS.jpg';
   String ciudad = '';
+  bool esCiudadFavorita = false;
   double temperatura = 0.0;
   String descripcion = '';
   bool cargando = false;
@@ -33,6 +38,7 @@ class _WeatherPageState extends State<WeatherPage> {
         temperatura = datos['current']['temperature'].toDouble();
         descripcion = datos['current']['weather_descriptions'][0];
         cargando = false;
+        esCiudadFavorita = isFavorite(ciudad);
       });
     } else {
       setState(() {
@@ -40,6 +46,7 @@ class _WeatherPageState extends State<WeatherPage> {
       });
       throw Exception('Error al obtener el clima');
     }
+
   }
   @override
   void  initState(){
@@ -121,6 +128,51 @@ class _WeatherPageState extends State<WeatherPage> {
                     },
                   ),
                   SizedBox(height: 400,),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final box = Boxes.getHiveLocalCityBox();
+                      if (!esCiudadFavorita) {
+                        await box.add(LocalCity(name: ciudad));
+                        setState(() {
+                          esCiudadFavorita = true;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('$ciudad añadida a favoritos')),
+                        );
+                      }
+                    },
+                    icon: Icon(
+                      esCiudadFavorita ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.white,
+                    ),
+                    label: const Text("Agregar a favoritos"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final ciudadSeleccionada = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const FavoriteCitiesPage()),
+                      );
+
+                      if (ciudadSeleccionada != null && ciudadSeleccionada is String) {
+                        obtenerClima(ciudadSeleccionada); // Llama al clima de esa ciudad
+                      }
+                    },
+                    icon: const Icon(Icons.list),
+                    label: const Text('Ciudades favoritas'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+
+
+
                 ],
               ),
             ),
@@ -156,4 +208,9 @@ class _WeatherPageState extends State<WeatherPage> {
     });
 
   }
+  bool isFavorite(String nombre) {
+    final box = Boxes.getHiveLocalCityBox();
+    return box.values.any((c) => c.name.toLowerCase() == nombre.toLowerCase());
+  }
+
 }
